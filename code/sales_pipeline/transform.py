@@ -21,6 +21,10 @@ anything you have not written yet.
 """
 
 
+from altair import value
+from matplotlib import text
+
+
 def clean_currency(value) -> float:
     """Convert a raw price into a float, using 0.0 when it cannot be read.
 
@@ -47,8 +51,16 @@ def clean_currency(value) -> float:
       from the `except`. That is the line that stops one `"N/A"` from killing a
       report of 400 good rows.
     """
-    # TODO: your code here
-    pass
+
+    if value is None:
+       return 0.0
+    text = str(value).replace("$", "").replace(",", "").strip()
+    try:
+       return float(text)
+    except ValueError:
+       return 0.0
+    
+
 
 
 def clean_quantity(value) -> int:
@@ -73,8 +85,14 @@ def clean_quantity(value) -> int:
     - Do not try to translate `"one"` into `1`. A word in a number field is bad
       data, and bad data becomes `0`.
     """
-    # TODO: your code here
-    pass
+
+    if value is None:
+      return 0
+    text = str(value).strip()
+    try:
+       return int(text)
+    except ValueError:
+       return 0
 
 
 def clean_sales_data(raw_data: list[dict]) -> list[dict]:
@@ -104,8 +122,18 @@ def clean_sales_data(raw_data: list[dict]) -> list[dict]:
       cleaned `price` and `qty` you just stored instead of cleaning the raw values
       a second time.
     """
-    # TODO: your code here
-    pass
+    
+    cleaned_data = []
+    for row in raw_data:
+          cleaned_row = {
+              "date": row["date"],
+              "item": row["item"],
+              "price": clean_currency(row["price"]),
+              "qty": clean_quantity(row["qty"]),
+          }
+          cleaned_row["total_revenue"] = cleaned_row["price"] * cleaned_row["qty"]
+          cleaned_data.append(cleaned_row)
+    return cleaned_data
 
 
 def calculate_total_revenue(cleaned_data: list[dict]) -> float:
@@ -128,8 +156,11 @@ def calculate_total_revenue(cleaned_data: list[dict]) -> float:
     - Nothing needs cleaning here. These rows already went through
       `clean_sales_data`, so `row["total_revenue"]` is a number you can trust.
     """
-    # TODO: your code here
-    pass
+    
+    total = 0.0
+    for row in cleaned_data:
+        total += row["total_revenue"]
+    return total
 
 
 def summarize_by_item(cleaned_data: list[dict]) -> list[dict]:
@@ -163,8 +194,14 @@ def summarize_by_item(cleaned_data: list[dict]) -> list[dict]:
       `key=lambda entry: (-entry["revenue"], entry["item"])`. The tuple reads as
       "sort by revenue, biggest first, and use the name to break ties."
     """
-    # TODO: your code here
-    pass
+    totals = {}
+    for row in cleaned_data:
+        name = row["item"]
+        if name not in totals:
+            totals[name] = {"item": name, "units_sold": 0, "revenue": 0.0}
+        totals[name]["units_sold"] += row["qty"]
+        totals[name]["revenue"] += row["total_revenue"]
+    return sorted(totals.values(), key=lambda entry: (-entry["revenue"], entry["item"]))
 
 
 def summarize_by_day(cleaned_data: list[dict]) -> list[dict]:
@@ -197,9 +234,14 @@ def summarize_by_day(cleaned_data: list[dict]) -> list[dict]:
       twice under two spellings. Do still guard the "first time I have seen this
       date" case, or the first row of each day has nothing to add itself to.
     """
-    # TODO: your code here
-    pass
-
+    totals = {}
+    for row in cleaned_data:
+        date = row["date"]
+        if date not in totals:
+            totals[date] = {"date": date, "units_sold": 0, "revenue": 0.0}
+        totals[date]["units_sold"] += row["qty"]
+        totals[date]["revenue"] += row["total_revenue"]
+    return sorted(totals.values(), key=lambda entry: entry["date"])
 
 def find_top_entry(summary: list[dict], field: str = "revenue") -> dict:
     """Return the entry of `summary` with the largest value in `field`.
@@ -231,5 +273,10 @@ def find_top_entry(summary: list[dict], field: str = "revenue") -> dict:
       by revenue. It is only sorted by *revenue*, so that answer is wrong the moment
       someone asks for `units_sold`.
     """
-    # TODO: your code here
-    pass
+    if not summary:
+        return {}
+    best = summary[0]
+    for entry in summary:
+        if entry[field] > best[field]:
+            best = entry
+    return best
