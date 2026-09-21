@@ -1,6 +1,15 @@
-Write your reflection here.
 
-See reflection.md for what makes a good reflection — be specific, use the
-terminology from this assignment (package, module, ETL, coercion, public API,
-relative import, accumulator, group by, unit vs. integration test), and make it
-actionable.
+
+Since this assignment had many parts, I learned as the assignment went on. 
+The operations report needed only one new function, 'summarize_by_day' , and reused everything else. 
+'find_top_entry' worked on days unchanged because it looks up 'entry[field]' instead of hardcoding "revenue", so it never needs to know what it is ranking. 
+When 'clean_currency' meets "N/A",  'float()' raises 'ValueError', my  'except' catches it, and the price becomes 0.0. 
+Without that, one bad cell would crash a 400-row report before it printed anything, though the cost is that bad rows are silently counted as zero. 
+'clean_currency' and  'clean_quantity' stay out of  "__init__.py" because they are plumbing that only 'clean_sales_data' should call. 
+Everything I export is a promise I have to keep, so I can rewrite the cleaning rules later without breaking any report. 
+I accidentally nested a def inside another function, so it wasn't a module-level name. 
+Pytest reported "Obtained: None" in 'test_clean_currency' rather than anything about indentation. 
+The scoped test isolates one function on clean data; the _on_generated_data one runs 40-row seeded datasets, so anything tuned to the 11 sample rows fails there. 
+Unit tests say where it broke, and integration tests say that it breaks on realistic data. 
+So for future assignments, after adding each function, I would like to make sure that I run 'python -m py_compile file.py'
+(for this assignment, "code/sales_pipeline/transform.py") and then  'pytest -x' , so an import error shows up immediately instead of hiding as vanished tests.
